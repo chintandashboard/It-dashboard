@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { WasteDataRow, wasteData as defaultData } from "@/data/wasteData";
 
-const GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1961avGt0QLOqjcKR1XF-xIR7J3MBu4EnTVznBfvsu54/gviz/tq?tqx=out:csv";
+const GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/134CwkH3U0MwytTpSbMdqevAC4h5GDnhc8WHEPqL5A8A/gviz/tq?tqx=out:csv";
 
 interface WasteDataContextType {
   wasteData: WasteDataRow[];

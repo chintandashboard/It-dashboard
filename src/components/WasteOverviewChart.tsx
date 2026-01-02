@@ -184,7 +184,7 @@ const WasteOverviewChart = () => {
         </div>
         
         {/* Time Period Dropdown */}
-        <Select value={timePeriod} onValueChange={(val) => setTimePeriod(val)}>
+        <Select value={timePeriod} onValueChange={(val) => setTimePeriod(val as TimePeriod)}>
           <SelectTrigger className="w-32 bg-gradient-to-r from-primary/10 to-accent/10 border-border text-sm font-medium">
             <SelectValue />
           </SelectTrigger>

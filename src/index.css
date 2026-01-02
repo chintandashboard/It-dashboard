@@ -223,3 +223,31 @@
     display: none;
   }
 }
+
+/* PDF Capture Mode - Fix text clipping issues without breaking layout */
+.pdf-capture-mode .truncate {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+.pdf-capture-mode span,
+.pdf-capture-mode p,
+.pdf-capture-mode h1,
+.pdf-capture-mode h2,
+.pdf-capture-mode h3,
+.pdf-capture-mode h4,
+.pdf-capture-mode h5,
+.pdf-capture-mode h6 {
+  line-height: 1.5 !important;
+}
+
+/* Show PDF-only elements during capture */
+.pdf-capture-mode .hidden.pdf-capture-mode\\:block {
+  display: block !important;
+}
+
+/* Hide interactive buttons during PDF capture */
+.pdf-capture-mode [data-hide-in-pdf="true"] {
+  display: none !important;
+}

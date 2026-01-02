@@ -41,17 +41,20 @@ const StatRow = ({ title, value, unit, icon: Icon, color, delay = 0 }: StatRowPr
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.4, delay }}
-      className="flex items-center justify-between py-2 border-b border-border/30 last:border-b-0"
+      className="flex items-center justify-between py-3 border-b border-border/30 last:border-b-0"
     >
       <div className="flex items-center gap-2">
-        <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color }} />
-        <span className="text-muted-foreground text-xs sm:text-sm font-medium">{title}</span>
+        <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" style={{ color }} />
+        <span className="text-muted-foreground text-xs sm:text-sm font-medium leading-relaxed">{title}</span>
       </div>
-      <div className="flex items-baseline gap-1">
-        <span className="text-foreground text-base sm:text-lg md:text-xl font-bold" style={{ color }}>
+      <div className="flex items-center gap-1">
+        <span 
+          className="text-foreground text-base sm:text-lg md:text-xl font-bold leading-normal pt-1" 
+          style={{ color }}
+        >
           <AnimatedNumber value={value} delay={delay + 0.2} />
         </span>
-        <span className="text-muted-foreground text-[10px] sm:text-xs">{unit}</span>
+        <span className="text-muted-foreground text-[10px] sm:text-xs leading-normal">{unit}</span>
       </div>
     </motion.div>
   );

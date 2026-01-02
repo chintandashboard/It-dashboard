@@ -39,12 +39,26 @@ const DashboardHeader = () => {
   }, []);
 
   return (
-    <motion.header
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="mb-8"
-    >
+    <>
+      {/* PDF Generation Loading Overlay */}
+      {isGeneratingReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm" data-hide-in-pdf="true">
+          <div className="flex flex-col items-center gap-4 p-8 bg-card rounded-xl shadow-2xl border border-border">
+            <Loader2 className="w-12 h-12 animate-spin text-primary" />
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-foreground">Generating PDF Report</h3>
+              <p className="text-sm text-muted-foreground mt-1">Please wait while we prepare your report...</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <motion.header
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="mb-8"
+      >
       {/* Partner Logos - Matching reference image layout */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -73,12 +87,12 @@ const DashboardHeader = () => {
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.3 }}
-        className="mt-4 mb-6 w-full overflow-hidden rounded-lg sm:rounded-xl relative"
+        className="mt-4 mb-6 w-full overflow-hidden rounded-lg sm:rounded-xl relative min-h-[220px] sm:min-h-[260px]"
       >
-        <img 
-          src={AyodhyaBanner} 
-          alt="SBIF CONSERW: Waste No More in Ayodhya" 
-          className="w-full h-auto object-cover"
+        <img
+          src={AyodhyaBanner}
+          alt="SBIF CONSERW: Waste No More in Ayodhya"
+          className="w-full h-full object-cover min-h-[220px] sm:min-h-[260px]"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-sky-600/30 via-sky-500/60 to-teal-500/40 flex flex-col items-center justify-center p-3 sm:p-6 md:p-8 min-h-[180px] sm:min-h-[220px]">
           <h2 className="text-base sm:text-2xl md:text-3xl lg:text-4xl font-black text-white drop-shadow-lg tracking-wide mb-2 sm:mb-3 text-center leading-tight px-3 py-1.5 rounded-md ">
@@ -90,14 +104,29 @@ const DashboardHeader = () => {
         </div>
       </motion.div>
 
+      {/* PDF-only header info - hidden normally, shown in PDF capture */}
+      <div className="hidden pdf-capture-mode:block mb-4 p-4 bg-secondary/30 rounded-lg border border-border/50">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">Project: SBI CONSERW - Waste Management Initiative</h2>
+            <p className="text-sm text-muted-foreground">Location: Ayodhya, Uttar Pradesh</p>
+            <p className="text-sm text-muted-foreground">Partners: SBI Foundation, SBI CONSERW, Chintan Environmental Research and Action Group</p>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/30">
+            <Calendar className="w-4 h-4 text-primary" />
+            <span className="text-sm font-medium text-foreground">Report Date: {format(currentDate, "dd MMM yyyy, HH:mm")}</span>
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
         <div className="flex flex-col gap-3">
           <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-foreground leading-tight">
             Waste Management Dashboard - Ayodhya
           </h1>
           
-          {/* Project Details and Report Buttons */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          {/* Project Details and Report Buttons - Hidden in PDF */}
+          <div className="flex items-center gap-2 sm:gap-3" data-hide-in-pdf="true">
             {/* Project Details Button */}
             <Dialog>
               <DialogTrigger asChild>
@@ -245,45 +274,149 @@ metal, and e-waste in the Ayodhya region.`;
                       );
                       const targets = sectionNodes.length > 0 ? sectionNodes : [document.documentElement];
                       try {
+                        // Add PDF capture mode class to body for special styling
+                        document.body.classList.add('pdf-capture-mode');
+                        
                         // Extra delay to allow charts/animations to render
-                        await new Promise((r) => setTimeout(r, 600));
+                        await new Promise((r) => setTimeout(r, 800));
 
                         const canvases: HTMLCanvasElement[] = [];
                         for (const el of targets) {
+                          // Get the full height including any overflow
+                          const rect = el.getBoundingClientRect();
+                          const fullHeight = Math.max(el.offsetHeight, el.scrollHeight, rect.height);
+                          const fullWidth = Math.max(el.offsetWidth, el.scrollWidth, rect.width);
+                          
+                          // Add extra padding to ensure content isn't cut off
+                          const captureHeight = fullHeight + 20;
+                          const captureWidth = fullWidth;
+                          
                           const canvas = await html2canvas(el, {
-                            scale: 1.25,
+                            scale: 2,
                             useCORS: true,
                             allowTaint: true,
                             scrollX: 0,
                             scrollY: 0,
                             x: 0,
                             y: 0,
-                            backgroundColor: getComputedStyle(document.body).backgroundColor || "#f9fafb",
-                            width: el.scrollWidth,
-                            height: el.scrollHeight,
-                            windowWidth: el.scrollWidth,
-                            windowHeight: el.scrollHeight,
+                            backgroundColor: "#f9fafb",
+                            width: captureWidth,
+                            height: captureHeight,
+                            windowWidth: captureWidth,
+                            windowHeight: captureHeight,
+                            logging: false,
+                            imageTimeout: 15000,
+                            onclone: (clonedDoc) => {
+                              // Add PDF capture class to cloned body
+                              clonedDoc.body.classList.add('pdf-capture-mode');
+                              
+                              // Show PDF-only header section
+                              const pdfHeaders = clonedDoc.querySelectorAll('.hidden.pdf-capture-mode\\:block');
+                              pdfHeaders.forEach((el) => {
+                                if (el instanceof HTMLElement) {
+                                  el.style.display = 'block';
+                                }
+                              });
+                              
+                              // Hide interactive buttons and loaders
+                              const hideElements = clonedDoc.querySelectorAll('[data-hide-in-pdf="true"], .animate-spin, [class*="Loader"], [class*="loader"]');
+                              hideElements.forEach((el) => {
+                                if (el instanceof HTMLElement) {
+                                  el.style.display = 'none';
+                                }
+                              });
+                              
+                              // Hide any elements containing "Generating" text
+                              const allButtons = clonedDoc.querySelectorAll('button');
+                              allButtons.forEach((btn) => {
+                                if (btn.textContent?.includes('Generating')) {
+                                  btn.style.display = 'none';
+                                }
+                              });
+                              
+                              // Fix all input and select elements - add padding to prevent clipping
+                              const formElements = clonedDoc.querySelectorAll('input, select, button, [role="combobox"]');
+                              formElements.forEach((el) => {
+                                if (el instanceof HTMLElement) {
+                                  el.style.paddingTop = '8px';
+                                  el.style.paddingBottom = '8px';
+                                  el.style.lineHeight = '1.6';
+                                }
+                              });
+                              
+                              // Fix SelectTrigger and similar components
+                              const selectTriggers = clonedDoc.querySelectorAll('[class*="SelectTrigger"], [class*="select"]');
+                              selectTriggers.forEach((el) => {
+                                if (el instanceof HTMLElement) {
+                                  el.style.paddingTop = '10px';
+                                  el.style.paddingBottom = '10px';
+                                  el.style.height = 'auto';
+                                  el.style.minHeight = '40px';
+                                }
+                              });
+                              
+                              // Fix truncate class elements
+                              const truncatedElements = clonedDoc.querySelectorAll('.truncate');
+                              truncatedElements.forEach((el) => {
+                                if (el instanceof HTMLElement) {
+                                  el.style.overflow = 'visible';
+                                  el.style.textOverflow = 'clip';
+                                  el.style.whiteSpace = 'normal';
+                                }
+                              });
+                              
+                              // Fix all text elements - add padding and better line-height
+                              const textElements = clonedDoc.querySelectorAll('span, p, h1, h2, h3, h4, h5, h6, label, td, th');
+                              textElements.forEach((el) => {
+                                if (el instanceof HTMLElement) {
+                                  el.style.lineHeight = '1.8';
+                                  el.style.paddingTop = '4px';
+                                  el.style.paddingBottom = '2px';
+                                }
+                              });
+                              
+                              // Fix stat row items specifically
+                              const statItems = clonedDoc.querySelectorAll('[class*="stat"], [class*="Stat"]');
+                              statItems.forEach((el) => {
+                                if (el instanceof HTMLElement) {
+                                  el.style.paddingTop = '8px';
+                                  el.style.paddingBottom = '8px';
+                                }
+                              });
+                            }
                           });
+                          
                           canvases.push(canvas);
                         }
+                        
+                        // Remove PDF capture mode class
+                        document.body.classList.remove('pdf-capture-mode');
 
-                        const totalHeight = canvases.reduce((sum, c) => sum + c.height, 0);
+                        const sectionGap = 40; // Gap between sections
+                        const totalHeight = canvases.reduce((sum, c) => sum + c.height, 0) + (canvases.length - 1) * sectionGap;
                         const maxWidth = canvases.reduce((max, c) => Math.max(max, c.width), 0);
-                        const padding = 80; // add margins so content is visually centered
+                        const padding = 60;
                         const pageWidth = maxWidth + padding * 2;
                         const pageHeight = totalHeight + padding * 2;
+                        
                         const pdf = new jsPDF({
                           orientation: pageWidth >= pageHeight ? "landscape" : "portrait",
                           unit: "px",
                           format: [pageWidth, pageHeight],
+                          compress: true,
+                          hotfixes: ["px_scaling"],
                         });
 
                         let yCursor = padding;
-                        canvases.forEach((canvas) => {
-                          const imgData = canvas.toDataURL("image/png");
-                          const x = (pageWidth - canvas.width) / 2; // center horizontally
-                          pdf.addImage(imgData, "PNG", x, yCursor, canvas.width, canvas.height, undefined, "FAST");
+                        canvases.forEach((canvas, index) => {
+                          const imgData = canvas.toDataURL("image/png", 1.0);
+                          const x = (pageWidth - canvas.width) / 2;
+                          pdf.addImage(imgData, "PNG", x, yCursor, canvas.width, canvas.height, undefined, "NONE");
                           yCursor += canvas.height;
+                          // Add gap between sections (except after the last one)
+                          if (index < canvases.length - 1) {
+                            yCursor += sectionGap;
+                          }
                         });
 
                         pdf.save(`waste-management-report-${reportPeriod}-${format(new Date(), "dd-MMM-yyyy")}.pdf`);
@@ -327,6 +460,7 @@ metal, and e-waste in the Ayodhya region.`;
         </motion.div>
       </div>
     </motion.header>
+    </>
   );
 };
 
