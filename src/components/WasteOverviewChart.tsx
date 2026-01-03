@@ -81,22 +81,52 @@ const CategorySummaryCards = ({ data }: { data: any[] }) => {
 };
 
 const WasteOverviewChart = () => {
-  const { wasteData } = useWasteData();
+  const { filteredData: contextFilteredData } = useWasteData();
   const [activeCategories, setActiveCategories] = useState<string[]>(
     categories.map((c) => c.key)
   );
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("day");
+  const [isReportMode, setIsReportMode] = useState(false);
 
+  // Listen for report mode - when generating report, use ALL filtered data from context
   useEffect(() => {
+    const handleReportDateRange = () => {
+      console.log('WasteOverviewChart: Report mode enabled - using all filtered data');
+      setIsReportMode(true);
+    };
+    
+    const handleReportGenerating = (e: Event) => {
+      const isGenerating = (e as CustomEvent<boolean>).detail;
+      if (!isGenerating) {
+        console.log('WasteOverviewChart: Report mode disabled');
+        setIsReportMode(false);
+      }
+    };
+
     const handler = (e: Event) => {
       const period = (e as CustomEvent<TimePeriod>).detail;
       if (period) setTimePeriod(period);
     };
+    
+    window.addEventListener("report-date-range-selected", handleReportDateRange);
+    window.addEventListener("report-generating", handleReportGenerating);
     window.addEventListener("report-period-selected", handler as EventListener);
-    return () => window.removeEventListener("report-period-selected", handler as EventListener);
+    
+    return () => {
+      window.removeEventListener("report-date-range-selected", handleReportDateRange);
+      window.removeEventListener("report-generating", handleReportGenerating);
+      window.removeEventListener("report-period-selected", handler as EventListener);
+    };
   }, []);
 
-  const filteredData = useMemo(() => filterDataByPeriod(wasteData, timePeriod), [wasteData, timePeriod]);
+  // In report mode, use all filtered data from context; otherwise apply timePeriod filter
+  const filteredData = useMemo(() => {
+    if (isReportMode) {
+      console.log('WasteOverviewChart: Using all', contextFilteredData.length, 'records from context');
+      return contextFilteredData;
+    }
+    return filterDataByPeriod(contextFilteredData, timePeriod);
+  }, [contextFilteredData, timePeriod, isReportMode]);
 
   const chartData = useMemo(() => getChartData(filteredData), [filteredData]);
 

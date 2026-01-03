@@ -94,14 +94,28 @@ const filterDataByPeriod = (data: WasteDataRow[], period: TimePeriod): WasteData
 };
 
 const DryWasteMethaneSection = () => {
-  const { wasteData } = useWasteData();
+  const { filteredData: contextFilteredData } = useWasteData();
   const [methaneTimePeriod, setMethaneTimePeriod] = useState<TimePeriod>("day");
   const [categoryTimePeriod, setCategoryTimePeriod] = useState<TimePeriod>("day");
   const [selectedCategory, setSelectedCategory] = useState<CategoryType | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [isReportMode, setIsReportMode] = useState(false);
 
-  // Sync both charts when a global report period is selected from the header dialog
+  // Listen for report mode - when generating report, use ALL filtered data from context
   useEffect(() => {
+    const handleReportDateRange = () => {
+      console.log('DryWasteMethaneSection: Report mode enabled - using all filtered data');
+      setIsReportMode(true);
+    };
+    
+    const handleReportGenerating = (e: Event) => {
+      const isGenerating = (e as CustomEvent<boolean>).detail;
+      if (!isGenerating) {
+        console.log('DryWasteMethaneSection: Report mode disabled');
+        setIsReportMode(false);
+      }
+    };
+
     const handleReportPeriod = (event: Event) => {
       const detail = (event as CustomEvent<TimePeriod>).detail;
       if (!detail) return;
@@ -109,18 +123,29 @@ const DryWasteMethaneSection = () => {
       setMethaneTimePeriod(detail);
     };
 
+    window.addEventListener("report-date-range-selected", handleReportDateRange);
+    window.addEventListener("report-generating", handleReportGenerating);
     window.addEventListener("report-period-selected", handleReportPeriod);
-    return () => window.removeEventListener("report-period-selected", handleReportPeriod);
+    
+    return () => {
+      window.removeEventListener("report-date-range-selected", handleReportDateRange);
+      window.removeEventListener("report-generating", handleReportGenerating);
+      window.removeEventListener("report-period-selected", handleReportPeriod);
+    };
   }, []);
 
   const calculateMethaneReduction = (totalWaste: number) => {
     return Math.round(((totalWaste / 1000) * (0.6 * 0.5)) * 28);
   };
 
-  // Filter data based on category time period
+  // Filter data based on category time period (or use all in report mode)
   const filteredCategoryData = useMemo(() => {
-    return filterDataByPeriod(wasteData, categoryTimePeriod);
-  }, [wasteData, categoryTimePeriod]);
+    if (isReportMode) {
+      console.log('DryWasteMethaneSection: Using all', contextFilteredData.length, 'records from context for categories');
+      return contextFilteredData;
+    }
+    return filterDataByPeriod(contextFilteredData, categoryTimePeriod);
+  }, [contextFilteredData, categoryTimePeriod, isReportMode]);
 
   // Calculate dry waste category totals
   const dryWasteTotals = useMemo(() => {
@@ -172,10 +197,14 @@ const DryWasteMethaneSection = () => {
     }
   }, [selectedCategory, filteredCategoryData]);
 
-  // Filter data for methane chart based on selected period
+  // Filter data for methane chart based on selected period (or use all in report mode)
   const filteredMethaneData = useMemo(() => {
-    return filterDataByPeriod(wasteData, methaneTimePeriod);
-  }, [wasteData, methaneTimePeriod]);
+    if (isReportMode) {
+      console.log('DryWasteMethaneSection: Using all', contextFilteredData.length, 'records from context for methane chart');
+      return contextFilteredData;
+    }
+    return filterDataByPeriod(contextFilteredData, methaneTimePeriod);
+  }, [contextFilteredData, methaneTimePeriod, isReportMode]);
 
   // Prepare methane chart data
   const methaneChartData = useMemo(() => {
@@ -226,7 +255,7 @@ const DryWasteMethaneSection = () => {
       date,
       methaneReduction: data.methaneReduction,
     }));
-  }, [wasteData, methaneTimePeriod]);
+  }, [contextFilteredData, methaneTimePeriod]);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {

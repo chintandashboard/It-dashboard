@@ -54,24 +54,53 @@ const parseDate = (dateStr: string): Date => {
 };
 
 const BreakdownChartsGrid = () => {
-  const { wasteData } = useWasteData();
+  const { filteredData: contextFilteredData } = useWasteData();
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("day");
+  const [isReportMode, setIsReportMode] = useState(false);
 
+  // Listen for report mode - when generating report, use ALL filtered data from context
   useEffect(() => {
+    const handleReportDateRange = () => {
+      console.log('BreakdownChartsGrid: Report mode enabled - using all filtered data');
+      setIsReportMode(true);
+    };
+    
+    const handleReportGenerating = (e: Event) => {
+      const isGenerating = (e as CustomEvent<boolean>).detail;
+      if (!isGenerating) {
+        console.log('BreakdownChartsGrid: Report mode disabled');
+        setIsReportMode(false);
+      }
+    };
+
     const handler = (e: Event) => {
       const period = (e as CustomEvent<TimePeriod>).detail;
       if (period) setTimePeriod(period);
     };
+    
+    window.addEventListener("report-date-range-selected", handleReportDateRange);
+    window.addEventListener("report-generating", handleReportGenerating);
     window.addEventListener("report-period-selected", handler as EventListener);
-    return () => window.removeEventListener("report-period-selected", handler as EventListener);
+    
+    return () => {
+      window.removeEventListener("report-date-range-selected", handleReportDateRange);
+      window.removeEventListener("report-generating", handleReportGenerating);
+      window.removeEventListener("report-period-selected", handler as EventListener);
+    };
   }, []);
 
   const filteredData = useMemo(() => {
-    if (!wasteData || wasteData.length === 0) return [];
+    if (!contextFilteredData || contextFilteredData.length === 0) return [];
     
-    const sortedData = [...wasteData].sort((a, b) => 
+    const sortedData = [...contextFilteredData].sort((a, b) => 
       parseDate(b.date).getTime() - parseDate(a.date).getTime()
     );
+    
+    // If in report mode, use ALL filtered data from context (already filtered by date range)
+    if (isReportMode) {
+      console.log('BreakdownChartsGrid: Using all', sortedData.length, 'records from context');
+      return sortedData;
+    }
     
     // Use the latest date in the data as reference, not current date
     const latestDate = parseDate(sortedData[0].date);
@@ -101,7 +130,7 @@ const BreakdownChartsGrid = () => {
       default:
         return sortedData;
     }
-  }, [wasteData, timePeriod]);
+  }, [contextFilteredData, timePeriod, isReportMode]);
 
   const chartData = useMemo(() => {
     const addPercents = (data: { name: string; value: number; color?: string }[]) => {

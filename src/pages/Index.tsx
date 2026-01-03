@@ -27,8 +27,8 @@ import { useWasteData } from "@/context/WasteDataContext";
 import { useEffect, useRef, useState } from "react";
 
 const Index = () => {
-  const { wasteData, isLoading } = useWasteData();
-  const totals = calculateTotals(wasteData);
+  const { wasteData, filteredData, isLoading } = useWasteData();
+  const totals = calculateTotals(filteredData);
 
   // Refs kept for potential future use (analytics, etc.)
   const overviewRef = useRef<HTMLDivElement | null>(null);
@@ -46,9 +46,9 @@ const Index = () => {
     return () => window.removeEventListener("report-generating", handler as EventListener);
   }, []);
 
-  // Calculate total dry and wet waste from data
-  const totalDryWaste = wasteData.reduce((sum, row) => sum + row.dryWaste, 0);
-  const totalWetWaste = wasteData.reduce((sum, row) => sum + row.wetWaste, 0);
+  // Calculate total dry and wet waste from filtered data
+  const totalDryWaste = filteredData.reduce((sum, row) => sum + row.dryWaste, 0);
+  const totalWetWaste = filteredData.reduce((sum, row) => sum + row.wetWaste, 0);
 
   if (isLoading) {
     return (

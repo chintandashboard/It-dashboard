@@ -8,7 +8,7 @@ type SortKey = "date" | "totalWaste" | "plastic" | "paper" | "glass" | "metal" |
 type SortDirection = "asc" | "desc";
 
 const WasteDataTable = () => {
-  const { wasteData } = useWasteData();
+  const { filteredData: wasteData } = useWasteData();
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [searchTerm, setSearchTerm] = useState("");

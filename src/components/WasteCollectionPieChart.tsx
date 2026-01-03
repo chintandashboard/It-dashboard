@@ -26,7 +26,7 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 const WasteCollectionPieChart = () => {
-  const { wasteData } = useWasteData();
+  const { filteredData: contextFilteredData } = useWasteData();
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("day");
 
   useEffect(() => {
@@ -38,7 +38,7 @@ const WasteCollectionPieChart = () => {
     return () => window.removeEventListener("report-period-selected", handler as EventListener);
   }, []);
 
-  const filteredData = useMemo(() => filterDataByPeriod(wasteData, timePeriod), [wasteData, timePeriod]);
+  const filteredData = useMemo(() => filterDataByPeriod(contextFilteredData, timePeriod), [contextFilteredData, timePeriod]);
   const totals = calculateTotals(filteredData);
 
   const chartData = [

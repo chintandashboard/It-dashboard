@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Calendar, FileText, Download, Info, Loader2 } from "lucide-react";
+import { Calendar as CalendarIcon, FileText, Download, Info, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { useState, useEffect } from "react";
 import html2canvas from "html2canvas";
@@ -10,6 +10,14 @@ import Ayodhya from "@/assets/images/Ayodhya.png";
 import Chintan from "@/assets/images/Chintan.png";
 import AyodhyaBanner from "@/assets/images/ayodhya.webp";
 import { generateProjectDetailsPDF } from "@/utils/generateProjectDetailsPDF";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 import {
   Dialog,
@@ -18,19 +26,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 const DashboardHeader = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [isGeneratingProjectPDF, setIsGeneratingProjectPDF] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
-  const [reportPeriod, setReportPeriod] = useState<"day" | "week" | "month" | "quarter" | "year">("day");
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [startDatePopoverOpen, setStartDatePopoverOpen] = useState(false);
+  const [endDatePopoverOpen, setEndDatePopoverOpen] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -114,20 +119,22 @@ const DashboardHeader = () => {
             <p className="text-sm text-muted-foreground">Partners: SBI Foundation, SBI CONSERW, Chintan Environmental Research and Action Group</p>
           </div>
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/30">
-            <Calendar className="w-4 h-4 text-primary" />
+            <CalendarIcon className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium text-foreground">Report Date: {format(currentDate, "dd MMM yyyy, HH:mm")}</span>
           </div>
         </div>
       </div>
 
       <div className="flex flex-col gap-3 sm:gap-4">
-        <div className="flex flex-col gap-2 sm:gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
           <h1 className="text-sm xs:text-base sm:text-2xl md:text-3xl font-bold text-foreground leading-tight">
             Waste Management Dashboard - Ayodhya
           </h1>
-          
+        </div>
+        
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
           {/* Project Details and Report Buttons - Hidden in PDF */}
-          <div className="flex items-center gap-2 sm:gap-3" data-hide-in-pdf="true">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0" data-hide-in-pdf="true">
             {/* Project Details Button */}
             <Dialog>
               <DialogTrigger asChild>
@@ -335,15 +342,30 @@ const DashboardHeader = () => {
 
                   {/* Download Button */}
                   <motion.button
-                    onClick={() => {
-                      generateProjectDetailsPDF();
+                    onClick={async () => {
+                      setIsGeneratingProjectPDF(true);
+                      try {
+                        await generateProjectDetailsPDF();
+                      } finally {
+                        setIsGeneratingProjectPDF(false);
+                      }
                     }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors w-full justify-center"
+                    disabled={isGeneratingProjectPDF}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors w-full justify-center disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    <Download className="w-4 h-4" />
-                    Download Project Details (PDF)
+                    {isGeneratingProjectPDF ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Generating PDF...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4" />
+                        Download Project Details (PDF)
+                      </>
+                    )}
                   </motion.button>
                 </div>
               </DialogContent>
@@ -381,41 +403,125 @@ const DashboardHeader = () => {
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Select period</DialogTitle>
+                  <DialogTitle>Select Date Range for Report</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
-                  <Select value={reportPeriod} onValueChange={(val) => setReportPeriod(val as typeof reportPeriod)}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Choose period" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="day">Day</SelectItem>
-                      <SelectItem value="week">Week</SelectItem>
-                      <SelectItem value="month">Month</SelectItem>
-                      <SelectItem value="quarter">Quarter</SelectItem>
-                      <SelectItem value="year">Year</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {/* Start Date Picker */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Start Date</label>
+                    <Popover open={startDatePopoverOpen} onOpenChange={setStartDatePopoverOpen} modal={true}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !startDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {startDate ? format(startDate, "dd MMM yyyy") : <span>Pick start date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 z-[100]" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={startDate}
+                          onSelect={(date) => {
+                            setStartDate(date);
+                            // Don't close immediately - let user see the selection
+                          }}
+                          today={new Date()}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                        <div className="p-2 border-t flex justify-end">
+                          <Button 
+                            size="sm" 
+                            onClick={() => setStartDatePopoverOpen(false)}
+                            disabled={!startDate}
+                          >
+                            Confirm
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  {/* End Date Picker */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">End Date</label>
+                    <Popover open={endDatePopoverOpen} onOpenChange={setEndDatePopoverOpen} modal={true}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !endDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {endDate ? format(endDate, "dd MMM yyyy") : <span>Pick end date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 z-[100]" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={endDate}
+                          onSelect={(date) => {
+                            setEndDate(date);
+                            // Don't close immediately - let user see the selection
+                          }}
+                          disabled={(date) => startDate ? date < startDate : false}
+                          today={new Date()}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                        <div className="p-2 border-t flex justify-end">
+                          <Button 
+                            size="sm" 
+                            onClick={() => setEndDatePopoverOpen(false)}
+                            disabled={!endDate}
+                          >
+                            Confirm
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
                   <motion.button
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
-                    disabled={isGeneratingReport}
+                    disabled={isGeneratingReport || !startDate || !endDate}
                     onClick={async () => {
+                      if (!startDate || !endDate) return;
                       setIsGeneratingReport(true);
-                      // Broadcast selected period so all widgets sync before capture
-                      window.dispatchEvent(new CustomEvent("report-period-selected", { detail: reportPeriod }));
-                      // Close the dialog so the overlay is not captured
+                      
+                      // Close the dialog first so the overlay is not captured
                       setReportDialogOpen(false);
-                      // Wait for close animation to finish and UI to settle
-                      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-                      await new Promise((r) => setTimeout(r, 180));
+                      
+                      // Wait for dialog close animation
+                      await new Promise((r) => setTimeout(r, 200));
+                      
+                      // Broadcast selected date range so all widgets sync before capture
+                      console.log('Dispatching date range for PDF:', startDate, 'to', endDate);
+                      window.dispatchEvent(new CustomEvent("report-date-range-selected", { 
+                        detail: { startDate, endDate } 
+                      }));
+                      
+                      // Wait for data to filter and React to re-render with new data
+                      // This is critical - the data context needs time to filter and components need to re-render
+                      await new Promise((r) => setTimeout(r, 1500));
+                      
                       // Force all sections to render/animate for capture and allow charts to size
                       window.dispatchEvent(new CustomEvent("report-generating", { detail: true }));
-                      await new Promise((r) => setTimeout(r, 320));
+                      await new Promise((r) => setTimeout(r, 500));
+                      
                       window.dispatchEvent(new Event("resize"));
                       window.scrollTo({ top: 0, behavior: "auto" });
                       document.documentElement.scrollTop = 0;
                       document.body.scrollTop = 0;
+                      
                       // Capture all report sections and stitch into one tall single-page PDF
                       const sectionNodes = Array.from(
                         document.querySelectorAll<HTMLElement>("[data-report-section]")
@@ -425,8 +531,8 @@ const DashboardHeader = () => {
                         // Add PDF capture mode class to body for special styling
                         document.body.classList.add('pdf-capture-mode');
                         
-                        // Extra delay to allow charts/animations to render
-                        await new Promise((r) => setTimeout(r, 800));
+                        // Extra delay to allow charts/animations to fully render
+                        await new Promise((r) => setTimeout(r, 1000));
 
                         const canvases: HTMLCanvasElement[] = [];
                         for (const el of targets) {
@@ -568,7 +674,10 @@ const DashboardHeader = () => {
                         });
 
                         // Save PDF and wait for it to complete
-                        pdf.save(`waste-management-report-${reportPeriod}-${format(new Date(), "dd-MMM-yyyy")}.pdf`);
+                        const dateRangeStr = startDate && endDate 
+                          ? `${format(startDate, "dd-MMM-yyyy")}_to_${format(endDate, "dd-MMM-yyyy")}`
+                          : format(new Date(), "dd-MMM-yyyy");
+                        pdf.save(`waste-management-report-${dateRangeStr}.pdf`);
                         
                         // Add a delay after save to ensure download starts before hiding loader
                         await new Promise((r) => setTimeout(r, 1500));
@@ -599,19 +708,19 @@ const DashboardHeader = () => {
               </DialogContent>
             </Dialog>
           </div>
-        </div>
 
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.4 }}
-          className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-1 sm:py-2 rounded-lg sm:rounded-xl bg-secondary/50 border border-border/50 self-start sm:self-end lg:self-auto mt-2 sm:mt-0"
-        >
-          <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground flex-shrink-0" />
-          <span className="text-[10px] xs:text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
-            {format(currentDate, "dd MMM yyyy, HH:mm:ss")}
-          </span>
-        </motion.div>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+            className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-1 sm:py-2 rounded-lg sm:rounded-xl bg-secondary/50 border border-border/50"
+          >
+            <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground flex-shrink-0" />
+            <span className="text-[10px] xs:text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
+              {format(currentDate, "dd MMM yyyy, HH:mm:ss")}
+            </span>
+          </motion.div>
+        </div>
       </div>
     </motion.header>
     </>
