@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { WasteDataRow, wasteData as defaultData } from "@/data/wasteData";
 import { parse, isValid } from "date-fns";
 
-const GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/134CwkH3U0MwytTpSbMdqevAC4h5GDnhc8WHEPqL5A8A/gviz/tq?tqx=out:csv";
+const GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1961avGt0QLOqjcKR1XF-xIR7J3MBu4EnTVznBfvsu54/gviz/tq?tqx=out:csv";
 
 interface WasteDataContextType {
   wasteData: WasteDataRow[];
@@ -48,30 +48,30 @@ const parseCSVToWasteData = (csvText: string): WasteDataRow[] => {
     // 1: Total Waste Collected (kg)
     // 2: Dry Waste (kg)
     // 3: Wet Waste (kg)
-    // 4: Plastic - Bags/Sacks
-    // 5: Plastic - Pet Bottles
-    // 6: Plastic - HDPE Bottles
-    // 7: Plastic - Polythene
-    // 8: Plastic - Others
-    // 9: Paper - Thermocol
-    // 10: Paper - Newspaper
-    // 11: Paper - Cartoon
-    // 12: Paper - Normal Paper
-    // 13: Paper - Cardboard
-    // 14: Paper - Others
-    // 15: Glass - White Grades
-    // 16: Glass - Others
-    // 17: Metal - Aluminum cans
-    // 18: Metal - Food Packing container
-    // 19: Metal - Others
-    // 20: E-waste - Batteries
-    // 21: E-waste - Charger
-    // 22: E-waste - Lighting
-    // 23: E-waste - Others
-    // 24: Others - Expired medicines
-    // 25: Others - Medicines packaging
-    // 26: Others - Thermometers
-    // 27: Others - Others
+    // 4: Plastic (kg) Bags/Sacks
+    // 5: Pet Bottles
+    // 6: HDPE Bottles
+    // 7: Polythene
+    // 8: Others
+    // 9: Paper (kg) Thermocol
+    // 10: Newspaper
+    // 11: Cartoon
+    // 12: Normal Paper
+    // 13: Cardboard
+    // 14: Others
+    // 15: Glass (kg) White Grades
+    // 16: Others
+    // 17: Metal (kg) Aluminum cans
+    // 18: Food Packing container
+    // 19: Others
+    // 20: E-waste (kg) Batteries
+    // 21: Charger
+    // 22: Lighting
+    // 23: Others
+    // 24: Others (kg) Expired medicines
+    // 25: Medicines packaging
+    // 26: Thermometers
+    // 27: Others
     // 28: Waste sent for Recycling (kg)
     // 29: Waste Composted (kg)
     // 30: Remarks
@@ -144,14 +144,16 @@ const parseCSVToWasteData = (csvText: string): WasteDataRow[] => {
           'composted:', composted);
         
         // Calculate derived metrics
-        // Waste Diverted from Landfill = 95% of Total Waste (assuming 5% residual/contamination)
-        const divertedFromLandfill = Math.round(totalWaste * 0.95);
+        // Waste Diverted from Landfill = Waste sent for Recycling + Waste Composted (actual diverted waste)
+        const divertedFromLandfill = recycling + composted;
         // Residual Waste to Landfill = Total Waste - Waste Diverted
         const residualToLandfill = totalWaste - divertedFromLandfill;
-        const recyclingEfficiency = recycling > 0 ? Math.round((recycling / recycling) * 100) : 0;
+        // Recycling Efficiency (%) = (Waste sent for Recycling / Total Waste) × 100
+        const recyclingEfficiency = totalWaste > 0 ? Math.round((recycling / totalWaste) * 100) : 0;
+        // Landfill Diversion Rate (%) = (Waste Diverted from Landfill / Total Waste) × 100
         const landfillDiversionRate = totalWaste > 0 ? Math.round((divertedFromLandfill / totalWaste) * 100) : 0;
-        const totalWasteCollected = recycling + composted;
-        const segregationEfficiency = totalWaste > 0 ? Math.round((totalWasteCollected / totalWaste) * 100) : 0;
+        // Segregation Efficiency (%) = (Recycled + Composted) / Total Waste × 100
+        const segregationEfficiency = totalWaste > 0 ? Math.round(((recycling + composted) / totalWaste) * 100) : 0;
         const compostProduced = Math.round(composted * 0.20);
         const methaneReduction = Math.round(((totalWaste / 1000) * (0.6 * 0.5)) * 28);
 

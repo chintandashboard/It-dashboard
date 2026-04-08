@@ -150,27 +150,27 @@ export const calculateTotals = (data: WasteDataRow[]) => {
 
   // Total Waste Collected from data
   const totalWaste = totals.totalWasteSum;
-  
-  // Waste Diverted from Landfill = reported divertedFromLandfill
-  const diverted = totals.divertedFromLandfill;
-  
+
+  // Waste Diverted from Landfill = Waste sent for Recycling + Waste Composted (actual diverted waste)
+  const diverted = totals.recycling + totals.composted;
+
   // Residual Waste to Landfill = Total Waste - Waste Diverted
   const residualToLandfill = totalWaste - diverted;
-  
+
   // Compost Produced (kg) = 20% of Waste Composted (kg)
   const compostProduced = Math.round(totals.composted * 0.20);
-  
+
   // Methane Emission Reduction (kg CO₂e) = ((Total Waste Collected (kg)/1000)*(0.6*0.5))*28
   const methaneReduction = Math.round(((totalWaste / 1000) * (0.6 * 0.5)) * 28);
-  
-  // Recycling Efficiency (%) = (Mass of usable recycled output / Waste sent for Recycling) × 100
-  const recyclingEfficiency = totals.recycling > 0 ? Math.round((totals.recycling / totals.recycling) * 100) : 0;
-  
+
+  // Recycling Efficiency (%) = (Waste sent for Recycling / Total Waste) × 100
+  const recyclingEfficiency = totalWaste > 0 ? Math.round((totals.recycling / totalWaste) * 100) : 0;
+
   // Landfill Diversion Rate (%) = (Waste Diverted from Landfill / Total Waste) × 100
   const landfillDiversionRate = totalWaste > 0 ? Math.round((diverted / totalWaste) * 100) : 0;
-  
-  // Segregation Efficiency (%) = (Correctly Segregated Waste / Total Waste Generated) × 100
-  const segregationEfficiency = totals.totalWasteSum > 0 ? Math.round((totalWaste / totals.totalWasteSum) * 100) : 0;
+
+  // Segregation Efficiency (%) = (Recycled + Composted) / Total Waste × 100
+  const segregationEfficiency = totalWaste > 0 ? Math.round(((totals.recycling + totals.composted) / totalWaste) * 100) : 0;
 
   return {
     ...totals,
@@ -226,7 +226,7 @@ export const getPaperBreakdown = (data: WasteDataRow[]) => {
   const breakdown = [
     { name: "Thermocol", value: totals.thermocol, color: "hsl(160, 84%, 39%)" },
     { name: "Newspaper", value: totals.newspaper, color: "hsl(45, 93%, 58%)" },
-    { name: "Carton", value: totals.cartoon, color: "hsl(35, 90%, 55%)" },
+    { name: "Cartoon", value: totals.cartoon, color: "hsl(35, 90%, 55%)" },
     { name: "Normal Paper", value: totals.normalPaper, color: "hsl(55, 88%, 55%)" },
     { name: "Cardboard", value: totals.cardboard, color: "hsl(40, 80%, 50%)" },
     { name: "Others", value: totals.others, color: "hsl(25, 95%, 53%)" },

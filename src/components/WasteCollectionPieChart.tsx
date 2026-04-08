@@ -42,9 +42,9 @@ const WasteCollectionPieChart = () => {
   const totals = calculateTotals(filteredData);
 
   const chartData = [
-    { name: "Total Waste", value: totals.totalWaste, color: COLORS[0], icon: Package },
-    { name: "Recycled", value: totals.recycling, color: COLORS[1], icon: Recycle },
-    { name: "Composted", value: totals.composted, color: COLORS[2], icon: Leaf },
+    { name: "Total Waste Collected", value: totals.totalWaste, color: COLORS[0], icon: Package },
+    { name: "Waste Sent for Recycling", value: totals.recycling, color: COLORS[1], icon: Recycle },
+    { name: "Waste Composted", value: totals.composted, color: COLORS[2], icon: Leaf },
   ];
 
   const total = chartData.reduce((sum, item) => sum + item.value, 0);

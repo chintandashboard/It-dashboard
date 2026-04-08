@@ -65,8 +65,8 @@ const Index = () => {
     { title: "Total Waste Collected", value: totals.totalWaste, unit: "kg", icon: Trash2, color: "hsl(199, 89%, 48%)" },
     { title: "Total Dry Waste Collected", value: totalDryWaste, unit: "kg", icon: Package, color: "hsl(45, 93%, 58%)" },
     { title: "Total Wet Waste Collected", value: totalWetWaste, unit: "kg", icon: Droplets, color: "hsl(160, 84%, 39%)" },
-    { title: "Dry Waste Sent for Recycling", value: totals.recycling, unit: "kg", icon: Recycle, color: "hsl(340, 82%, 52%)" },
-    { title: "Wet Waste Composted", value: totals.composted, unit: "kg", icon: Leaf, color: "hsl(120, 60%, 45%)" },
+    { title: "Waste Sent for Recycling", value: totals.recycling, unit: "kg", icon: Recycle, color: "hsl(340, 82%, 52%)" },
+    { title: "Waste Composted", value: totals.composted, unit: "kg", icon: Leaf, color: "hsl(120, 60%, 45%)" },
   ];
 
   const rightColumnStats = [
