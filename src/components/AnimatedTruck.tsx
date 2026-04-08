@@ -22,6 +22,7 @@ const AnimatedTruck = () => {
       x: ["-100px", "calc(100vw + 100px)"],
       transition: { duration: 15, repeat: Infinity, ease: "linear", repeatType: "loop" },
     });
+    
     treeControls.start((i) => ({
       x: ["0%", "-100%"],
       transition: { duration: 6, repeat: Infinity, ease: "linear", repeatType: "loop", delay: i * 0.1 },
